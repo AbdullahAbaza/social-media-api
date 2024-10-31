@@ -12,8 +12,12 @@ class Post(Base):
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     published = Column(Boolean, nullable=False, server_default='TRUE')
-    datetime_created = Column(
+    datetime_created =  Column(
         TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
     
 
- 
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    email = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False)

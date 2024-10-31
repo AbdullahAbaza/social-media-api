@@ -1,144 +1,139 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi.params import Body
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+
 from typing import Optional
 from datetime import datetime
 import uuid
 
 from . import models
-from .database import engine, get_db, Session
+from .database import engine, get_db
+from sqlalchemy.orm import Session 
 
 models.Base.metadata.create_all(bind=engine)
 
-
-
 app = FastAPI()
-
 
 for i in range(10):
     try:
         conn = psycopg2.connect(
-            host='localhost', port='5432', user='postgres', 
+            host='localhost', port='5432', user='postgres',
             password='Daf28876#@', dbname='social-media-db', cursor_factory=RealDictCursor
-            )
+        )
         cursor = conn.cursor()
         print("Database connection created successfully")
         break
     except psycopg2.Error as error:
-        print("Connectin to database failed")
+        print("Connection to database failed")
         print("ERROR: ", error)
         time.sleep(2)
 
 
 
 class Post(BaseModel):
-    id : Optional[uuid.UUID] = None
+    # id: Optional[uuid.UUID] = None
     title: str
     content: str
     published: bool = True
-    rating: Optional[int] = None
-    datetime_created: Optional[datetime] = None
+    # datetime_created: Optional[datetime] = None
 
-
+class User(BaseModel):
+    # id: Optional[int] = None
+    email: EmailStr
+    name: str
 
 @app.get("/")
 async def root():
     return {"message": "Hello World"}
 
-@app.get("/sqlalchemy")
-async def test_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    print(posts)
-    return {"data": posts}
-
-
-@app.get("/posts")
-async def get_posts():
-    cursor.execute('''Select * From posts''')
-    posts = cursor.fetchall()
+@app.post("/users")
+async def create_user(user: User, db: Session = Depends(get_db)):
+    new_user =  models.User(**user.model_dump())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
     return {
-        "message": "these are all of the posts",
-        "data" : posts  
-        }
-
-
-@app.get("/posts/{id}")
-async def get_post_by_id(id: uuid.UUID):
-    print(type(id), id)
-    cursor.execute('''SELECT * FROM posts WHERE id = %s''', (str(id),))
-    post = cursor.fetchone()
-    if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=f"post with id: {id} does not exist!"
-            )
-    
-    return {
-    "message": f"post found with id: {id}",
-    "data": post
-}
-
-
-
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-async def create_post(post: Post):
-    cursor.execute(
-        '''INSERT INTO posts (title, content, published) 
-        VALUES (%s, %s, %s) RETURNING *
-        ''' , (post.title, post.content, post.published)
-        )
-    new_post = cursor.fetchone()
-    conn.commit()
-    return {
-        "message": "post created successfully",
-        "data": new_post
+        "date": new_user
     }
 
 
-@app.delete("/posts/{id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_post(id: uuid.UUID):
-    cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING *''', (str(id),))
-    deleted_post = cursor.fetchone()
-    conn.commit()
+@app.get("/users/{id}")
+async def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.id == id).first()
+    # print(user)
+    return {
+        "data": user
+    }
 
-    if deleted_post is None:
+
+@app.get("/posts", status_code=status.HTTP_201_CREATED)
+async def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    return {
+        "data": posts
+    }
+
+@app.get("/posts/{id}")
+async def get_post_by_id(id: uuid.UUID, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id).first()
+    # print(post)
+    if not post:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"post with id: {id} does not exist!"
+        ) 
+
+    return {
+        "data": post
+    }
+
+
+@app.post("/posts", status_code=status.HTTP_201_CREATED)
+async def create_post(post: Post, db: Session = Depends(get_db)):
+    new_post = models.Post(**post.model_dump())
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+    return {
+        "data": new_post
+    }
+    
+
+@app.delete("/posts/{id}")
+async def delete_post(id: uuid.UUID, db: Session = Depends(get_db)):
+    post = db.query(models.Post).filter(models.Post.id == id)
+
+    if post.first() is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} does not exist"
         )
+        
+    post.delete(synchronize_session=False)
+    db.commit()
+        
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-
-
-@app.put("/posts/{id}")
-async def update_post_by_id(id: uuid.UUID, post: Post):
-    cursor.execute(
-        '''UPDATE posts SET title = %s, content = %s, published = %s 
-        WHERE id = %s RETURNING *''', (post.title, post.content, post.published, str(id))
-        )
-    
-    updated_post = cursor.fetchone()
-    if updated_post is None:
+@app.put("/posts/{id}", status_code=status.HTTP_200_OK)
+async def update_post_by_id(id: uuid.UUID, updated_post: Post, db: Session = Depends(get_db)):    
+    post_query = db.query(models.Post).filter(models.Post.id == id)
+    post = post_query.first()
+    if post is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id: {id} not found"
         )
-    
-    conn.commit()
+        
+    post = post_query.update(updated_post.model_dump(), synchronize_session=False)
+    db.commit()    
     return {
-        "message": "Post Updated Succesfully",
-        "data": updated_post
+        "message": "Post Updated Successfully",
+        "data": post_query.first()
     }
-
-
-
-
-
-
 
 

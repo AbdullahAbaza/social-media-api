@@ -7,11 +7,11 @@ class PostBase(BaseModel):
     content: str
     published: bool = True    
 
-class PostCreate(PostBase):
+class PostIn(PostBase):
     pass
 
 
-class Post(PostBase):
+class PostOut(PostBase):
     id: UUID4
     datetime_created: datetime
     
@@ -20,15 +20,17 @@ class Post(PostBase):
 
 
 class UserBase(BaseModel):
-    email: EmailStr
     name: str
+    email: EmailStr
 
-class UserCreate(UserBase):
-    pass
+class UserIn(UserBase):
+    password: str
 
-class User(UserBase):
+class UserOut(UserBase):
     id: int
     datetime_created: datetime
     
-    class config:
-        orm_mode = True
+    
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str

@@ -18,6 +18,7 @@ class Post(Base):
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
-    email = Column(String(100), nullable=False)
-    name = Column(String(100), nullable=False)
+    name = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    password = Column(String, nullable=False)
     datetime_created =  Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))

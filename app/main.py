@@ -3,8 +3,15 @@ from . import models
 from .database import engine
 from .routers import post, user,auth
 
-models.Base.metadata.create_all(bind=engine)
+
+def create_db_and_tables():
+    models.Base.metadata.create_all(bind=engine)
+    
 app = FastAPI()
+
+@app.on_event("startup")
+def on_startup():
+    create_db_and_tables()
 
 @app.get("/")
 async def root():

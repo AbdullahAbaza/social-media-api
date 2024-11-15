@@ -2,6 +2,7 @@ from .. import models, schemas, utils
 from fastapi import status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session 
 from typing import List
+from pydantic import UUID4
 from sqlalchemy.exc import IntegrityError
 
 from ..database import get_db
@@ -29,7 +30,7 @@ def get_user_by_email(email: schemas.EmailStr, db: Session = Depends(get_db)):
     return user
 
 @router.get("/{id}", response_model=schemas.UserOut)
-async def get_user_by_id(id: int, db: Session = Depends(get_db)):
+async def get_user_by_id(id: UUID4, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == id).first()
     if not user:
         raise HTTPException(

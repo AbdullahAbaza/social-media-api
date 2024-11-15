@@ -54,7 +54,7 @@ async def create_user(user: schemas.UserIn, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"User with email does already exist!"
+            detail="User with email does already exist!"
         )
 
 

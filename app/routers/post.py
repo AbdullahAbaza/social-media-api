@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
 import uuid
+from .. import oauth2
 
 router = APIRouter(
     prefix="/posts",
@@ -12,13 +13,15 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.PostOut])
-async def get_posts(db: Session = Depends(get_db)):
+async def get_posts(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
     posts = db.query(models.Post).all()
     return posts
 
 
 @router.get("/{id}", response_model=schemas.PostOut)
-async def get_post_by_id(id: uuid.UUID, db: Session = Depends(get_db)):
+async def get_post_by_id(id: uuid.UUID, db: Session = Depends(get_db), 
+                         current_user: models.User = Depends(oauth2.get_current_user)):
+    
     post = db.query(models.Post).filter(models.Post.id == id).first()
     if not post:
         raise HTTPException(
@@ -30,7 +33,10 @@ async def get_post_by_id(id: uuid.UUID, db: Session = Depends(get_db)):
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostOut)
-async def create_post(post: schemas.PostIn, db: Session = Depends(get_db)):
+async def create_post(post: schemas.PostIn, 
+                      db: Session = Depends(get_db), 
+                      current_user: models.User = Depends(oauth2.get_current_user)):
+    
     new_post = models.Post(**post.model_dump())
     db.add(new_post)
     db.commit()
@@ -39,7 +45,10 @@ async def create_post(post: schemas.PostIn, db: Session = Depends(get_db)):
     
 
 @router.put("/{id}", response_model=schemas.PostOut)
-async def update_post(id: uuid.UUID, updated_post: schemas.PostIn, db: Session = Depends(get_db)):    
+async def update_post(id: uuid.UUID, updated_post: schemas.PostIn, 
+                      db: Session = Depends(get_db), 
+                      current_user: models.User = Depends(oauth2.get_current_user)):   
+    
     post_query = db.query(models.Post).filter(models.Post.id == id)
     post = post_query.first()
     if post is None:
@@ -54,7 +63,9 @@ async def update_post(id: uuid.UUID, updated_post: schemas.PostIn, db: Session =
     
 
 @router.delete("/{id}")
-async def delete_post(id: uuid.UUID, db: Session = Depends(get_db)):
+async def delete_post(id: uuid.UUID, db: Session = Depends(get_db), 
+                      current_user: models.User = Depends(oauth2.get_current_user)):
+    
     post = db.query(models.Post).filter(models.Post.id == id)
     if post.first() is None:
         raise HTTPException(

@@ -1,9 +1,11 @@
-from .. import models, schemas
-from fastapi import Response, status, HTTPException, Depends, APIRouter
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from typing import List
+
+from .. import models, oauth2, schemas
 from ..database import get_db
-from .. import oauth2
 
 router = APIRouter(
     prefix="/posts",
@@ -12,8 +14,29 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[schemas.PostOut])
-async def get_posts(db: Session = Depends(get_db), current_user: models.User = Depends(oauth2.get_current_user)):
-    posts = db.query(models.Post).all()
+async def get_posts(
+    db: Session = Depends(get_db), 
+    current_user: models.User = Depends(oauth2.get_current_user), 
+    limit: int = 10, skip: int = 0, search: Optional[str] = None
+    ):
+    
+    # Build base query
+    posts_query = db.query(models.Post)
+    
+    # Apply search filter if provided
+    if search:
+        posts_query = posts_query.filter(
+            func.lower(models.Post.title).contains(func.lower(search))
+        )
+    
+    # Apply pagination
+    # total = posts_query.count()
+    
+    posts = posts_query.order_by(models.Post.datetime_created.desc())\
+                      .limit(limit)\
+                      .offset(skip)\
+                      .all()
+    
     return posts
 
 

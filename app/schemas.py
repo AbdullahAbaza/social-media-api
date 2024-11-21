@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, UUID4
+from pydantic import BaseModel, EmailStr, UUID4, conint
 from datetime import datetime
 
 
@@ -42,8 +42,9 @@ class PostOut(PostBase):
     datetime_created: datetime
     owner_id: UUID4
     owner: UserOut
-    
     class config:
         orm_mode = True
-
-
+    
+class Vote(BaseModel):
+    post_id: int
+    vote_direction: conint(ge=0, le=1)

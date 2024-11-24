@@ -47,9 +47,9 @@ async def get_posts(
                     'name', models.User.name
                 )
             ).filter(models.User.id.isnot(None)), '[]').cast(JSON).label('voters')
-    ).outerjoin(vote_count_cte, models.Post.id == vote_count_cte.c.post_id)\
+    ).join(models.User, models.Post.owner_id == models.User.id, isouter=False)\
+        .outerjoin(vote_count_cte, models.Post.id == vote_count_cte.c.post_id)\
         .outerjoin(models.Vote, models.Post.id == models.Vote.post_id)\
-        .outerjoin(models.User, models.Vote.user_id == models.User.id)\
         .group_by(models.Post.id, vote_count_cte.c.votes_count)
 
 
@@ -81,18 +81,44 @@ async def get_posts(
     return posts
 
 
-@router.get("/{id}", response_model=schemas.PostOut)
-async def get_post_by_id(id: int, db: Session = Depends(get_db), 
-                         current_user: models.User = Depends(oauth2.get_current_user)):
+@router.get("/votes/{post_id}", response_model=schemas.PostWithVotersOut)
+async def get_post_with_votes(
+    post_id: int, 
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user)
+    ):
     
-    post = db.query(models.Post).filter(models.Post.id == id).first()
+    # Fetch the post
+    post_query = db.query(models.Post).filter(models.Post.id == post_id)
+        
+    post = post_query.first()
+
     if not post:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
+            status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Post with id: {id} does not exist!"
         )
         
-    return post
+    # check user authrization to view not puplished posts 
+    if not post.published and post.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorizerd to perform requested action"
+        )
+
+    # Lazily load votes and voters 
+    
+    votes_count = len(post.votes)
+    voters = [
+        {"id": vote.user.id, "name": vote.user.name} for vote in post.votes if vote.user
+    ]
+
+    return {
+        "Post": post,
+        "votes_count": votes_count,
+        "voters": voters,
+    }
+
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.PostOut)

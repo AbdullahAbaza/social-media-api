@@ -34,10 +34,10 @@ class TokenData(BaseModel):
 class PostBase(BaseModel):
     title: str
     content: str
-    published: bool = True
+    
 
 class PostIn(PostBase):
-    pass
+    published: bool = True
 
 
 class PostOwner(BaseModel):
@@ -57,9 +57,8 @@ class PostVoter(BaseModel):
 class PostOut(PostBase):
     id: int
     datetime_created: datetime
-    owner_id: UUID4
     owner: PostOwner
-    
+
     class config:
         orm_mode = True
     
@@ -68,7 +67,17 @@ class PostWithVotesOut(BaseModel):
     votes_count: int
     voters: List[PostVoter]
     
+    class config:
+        orm_mode = True
+    
+class PostWithVotersOut(BaseModel):
+    Post: PostOut
+    votes_count: int
+    voters: List[PostVoter]
 
+    class Config:
+        orm_mode = True
+ 
 
 
 

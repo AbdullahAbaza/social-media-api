@@ -62,10 +62,9 @@ class PostOut(PostBase):
     class config:
         orm_mode = True
     
-class PostWithVotesOut(BaseModel):
+class PostWithVoteCountOut(BaseModel):
     Post: PostOut
     votes_count: int
-    voters: List[PostVoter]
     
     class config:
         orm_mode = True

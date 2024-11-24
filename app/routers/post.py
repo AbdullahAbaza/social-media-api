@@ -19,7 +19,7 @@ class SortDirection(str, Enum):
     desc = "desc"
 
 
-@router.get("/", response_model=List[schemas.PostWithVotesOut])
+@router.get("/", response_model=List[schemas.PostWithVoteCountOut])
 async def get_posts(
     db: Session = Depends(get_db), 
     current_user: models.User = Depends(oauth2.get_current_user),
@@ -28,31 +28,13 @@ async def get_posts(
     search: Optional[str] = None,
     sort_direction: SortDirection = SortDirection.desc
     ):
+
+    # Base query with vote count
+    posts_query = db.query(models.Post, 
+                           func.count(models.Vote.post_id).label("votes_count")
+        ).outerjoin(models.Vote, models.Vote.post_id == models.Post.id)\
+            .group_by(models.Post.id)
     
-    # get Vote Count By Building a cte
-    vote_count_cte = select(
-        models.Vote.post_id,
-        func.count(models.Vote.post_id).label("votes_count")
-    ).group_by(models.Vote.post_id)\
-        .cte("vote_count_cte")
-
-    # Base query with vote count and voters
-    posts_query = db.query(
-        models.Post,
-        func.coalesce(vote_count_cte.c.votes_count, 0).label('votes_count'),
-        func.coalesce(
-            func.json_agg(
-                func.json_build_object(
-                    'id', models.User.id,
-                    'name', models.User.name
-                )
-            ).filter(models.User.id.isnot(None)), '[]').cast(JSON).label('voters')
-    ).join(models.User, models.Post.owner_id == models.User.id, isouter=False)\
-        .outerjoin(vote_count_cte, models.Post.id == vote_count_cte.c.post_id)\
-        .outerjoin(models.Vote, models.Post.id == models.Vote.post_id)\
-        .group_by(models.Post.id, vote_count_cte.c.votes_count)
-
-
     # Filter Posts that are published only
     posts_query = posts_query.filter(models.Post.published.is_(True))
     
@@ -88,8 +70,14 @@ async def get_post_with_votes(
     current_user: models.User = Depends(oauth2.get_current_user)
     ):
     
+    # Vote
+    
     # Fetch the post
-    post_query = db.query(models.Post).filter(models.Post.id == post_id)
+    post_query = db.query(
+        models.Post
+        
+        ).filter(models.Post.id == post_id)
+    
         
     post = post_query.first()
 

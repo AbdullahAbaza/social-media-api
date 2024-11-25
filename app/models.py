@@ -14,20 +14,21 @@ class Post(Base):
     published = Column(Boolean, nullable=False, server_default='TRUE')
     datetime_created =  Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
     owner_id = Column(Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-
+        
     owner = relationship("User", back_populates="posts")
     votes = relationship("Vote", back_populates="post")
     
 class User(Base):
     __tablename__ = "users"
-    id = Column(Uuid, primary_key=True, nullable=False, server_default=text('gen_random_uuid()'), index=True)
+    id = Column(Uuid, primary_key=True, nullable=False, server_default=text('gen_random_uuid()'), index=True) 
     name = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True, index=True)
     password = Column(String, nullable=False)
     datetime_created =  Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
-
+    
     posts = relationship("Post", back_populates="owner")
     votes = relationship("Vote", back_populates="user")
+    
     
 class Vote(Base):
     __tablename__ = "votes"
@@ -36,4 +37,3 @@ class Vote(Base):
     
     post = relationship("Post", back_populates="votes")
     user = relationship("User", back_populates="votes")
-

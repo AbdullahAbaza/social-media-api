@@ -7,14 +7,15 @@ import logging
 logging.basicConfig()
 logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
-def create_db_and_tables():
-    models.Base.metadata.create_all(bind=engine)
+
+# def create_db_and_tables():  # --> not needed if we use alembic database migration tool
+#     models.Base.metadata.create_all(bind=engine)
     
 app = FastAPI()
 
-@app.on_event("startup")
-def on_startup():
-    create_db_and_tables()
+# @app.on_event("startup")
+# def on_startup():
+#     create_db_and_tables()
 
 @app.get("/")
 async def root():

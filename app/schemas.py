@@ -15,7 +15,7 @@ class UserOut(UserBase):
     datetime_created: datetime
 
     class config:
-        orm_mode= True # used by sqlalchemy for lazy loading
+        from_attributes= True # used by sqlalchemy for lazy loading
     
 class UserLogin(BaseModel):
     email: EmailStr
@@ -45,14 +45,14 @@ class PostOwner(BaseModel):
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class PostVoter(BaseModel):
     id: UUID4
     name: str
 
     class Config:
-        orm_mode = True
+        from_attributes = True
         
 class PostOut(PostBase):
     id: int
@@ -60,14 +60,14 @@ class PostOut(PostBase):
     owner: PostOwner
 
     class config:
-        orm_mode = True
+        from_attributes = True
     
 class PostWithVoteCountOut(BaseModel):
     Post: PostOut
     votes_count: int
     
     class config:
-        orm_mode = True
+        from_attributes = True
     
 class PostWithVotersOut(BaseModel):
     Post: PostOut
@@ -75,7 +75,7 @@ class PostWithVotersOut(BaseModel):
     voters: List[PostVoter]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
  
 
 

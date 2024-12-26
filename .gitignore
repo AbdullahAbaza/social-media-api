@@ -163,4 +163,8 @@ cython_debug/
 
 .vs/
 .vscode/
+<<<<<<< HEAD
 .idea/
+=======
+.idea
+>>>>>>> origin/alembic-database-migration

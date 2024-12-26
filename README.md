@@ -88,6 +88,8 @@ Access the API documentation at: http://localhost:8000/docs
 - Automated testing
 - Continuous deployment
 - Infrastructure as Code
+## Cloud Deployment: 
+- Deploy the application on the cloud using multiple containers, incorporating an Nginx load balancer and reverse proxy
 
 ## Development Reference
 This project is based on the [FastAPI Course](https://github.com/Sanjeev-Thiyagarajan/fastapi-course) by Sanjeev Thiyagarajan, with additional enhancements and features.

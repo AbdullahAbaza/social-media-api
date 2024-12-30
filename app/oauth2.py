@@ -9,8 +9,6 @@ from app.config import settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-# to get a string like this run:
-# openssl rand -hex 32
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
@@ -45,8 +43,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         headers={"WWW-Authenticate": "Bearer"}
     )
     
+    # Debugging: Log the received token
+    print(f"Received token: {token}")
+    
     token_data = verify_access_token(token, credentials_exception)
     user = db.query(models.User).filter(models.User.id == token_data.id).first()
     
+    # Debugging: Log the retrieved user
+    print(f"Retrieved user: {user}")
     return user
     

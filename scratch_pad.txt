@@ -11,3 +11,10 @@ URL_encode_Password = quote_plus(settings.POSTGRES_PASSWORD).replace("%", "%%") 
 SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.POSTGRES_USER}:{URL_encode_Password}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
 
 config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
+
+
+
+
+# Set postmant to save bearer token to enviroment variable
+
+pm.environment.set("JWT", pm.response.json().access_token);

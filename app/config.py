@@ -2,11 +2,11 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    POSTGRES_SERVER: str
-    POSTGRES_PORT: int
-    POSTGRES_DB: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
+    DATABASE_HOSTNAME: str
+    DATABASE_PORT: int
+    DATABASE_NAME: str
+    DATABASE_USERNAME: str
+    DATABASE_PASSWORD: str
     
     SECRET_KEY: str
     ALGORITHM: str

@@ -33,9 +33,9 @@ target_metadata = models.Base.metadata
 # Override aqlalchemy url 
 from urllib.parse import quote_plus
 
-URL_encode_Password = quote_plus(settings.POSTGRES_PASSWORD).replace("%", "%%")  # URL-encode the password for handling special characters
+URL_Encode_DATABASE_PASSWORD = quote_plus(settings.DATABASE_PASSWORD).replace("%", "%%")  # URL-encode the password for handling special characters
 
-SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.POSTGRES_USER}:{URL_encode_Password}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.DATABASE_USERNAME}:{URL_Encode_DATABASE_PASSWORD}@{settings.DATABASE_HOSTNAME}:{settings.DATABASE_PORT}/{settings.DATABASE_NAME}"
 
 config.set_main_option("sqlalchemy.url", SQLALCHEMY_DATABASE_URL)
 

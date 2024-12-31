@@ -15,6 +15,7 @@ logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 #     models.Base.metadata.create_all(bind=engine)
 
     
+# app = FastAPI(swagger_ui_parameters={"defaultModelsExpandDepth": -1})
 app = FastAPI()
 
 # @app.on_event("startup")
@@ -34,10 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
 @app.get("/")
-async def root():
+def root():
     return {"message": "Hello From FastAPI!."}
 
 app.include_router(auth.router)

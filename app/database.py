@@ -5,9 +5,9 @@ from app.config import settings
 
 from urllib.parse import quote_plus
 
-password = quote_plus(settings.POSTGRES_PASSWORD)  # URL-encode the password for handling special characters
+DATABASE_PASSWORD = quote_plus(settings.DATABASE_PASSWORD)  # URL-encode the password for handling special characters
 
-SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.POSTGRES_USER}:{password}@{settings.POSTGRES_SERVER}:{settings.POSTGRES_PORT}/{settings.POSTGRES_DB}"
+SQLALCHEMY_DATABASE_URL = f"postgresql+psycopg2://{settings.DATABASE_USERNAME}:{DATABASE_PASSWORD}@{settings.DATABASE_HOSTNAME}:{settings.DATABASE_PORT}/{settings.DATABASE_NAME}"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

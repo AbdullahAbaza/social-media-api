@@ -1,0 +1,7 @@
+[project]
+name = "social-media-api"
+version = "0.1.0"
+description = "Social Media API using fastapi"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []

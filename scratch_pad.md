@@ -154,13 +154,149 @@ uv pip compile requirements.txt --output-file requirements.lock
 uvicorn app.main:app --reload
 ```
 
-- Settin the environment variables manualy
+- Setting the environment variables manualy
+
+touch -p ~/.env
 
 export DATABASE_HOSTNAME=localhost
 export DATABASE_PORT=5432
 export DATABASE_NAME=social-media-db
 export DATABASE_USERNAME=postgres
 export DATABASE_PASSWORD=Daf28876#@
-export SECRET_KEY=655d041f3ef4b80d43bd74e14cc47c17b459ac0d88787cbd85625dexport be8583186b
-export ALGORITHM=HS256
-export ACCESS_TOKEN_EXPIRE_MINUTES=60
+
+**this method doesn't presist after a reboot**
+
+``` bash
+set -o allexport; source /home/fastapi/.env
+printenv
+
+# Update .profile to read and set environment variables from the .env file
+sudo vim .profile
+set -o allexport; source /home/fastapi/.env
+
+# Create the database
+psql -U postgres
+create database "social-media-db";
+\l
+\q
+
+# Run the alembic migrations
+alembic upgrade head
+
+# Run the app 
+uvicorn app.main:app --host 0.0.0.0
+
+```
+
+## Using a process manager to start the app
+
+Running Uvicorn using a process manager ensures that you can run multiple processes in a resilient manner, and allows you to perform server upgrades without dropping requests.
+
+Uvicorn includes a --workers option that allows you to run multiple worker processes.
+
+```bash
+uvicorn main:app --workers 4 
+```
+
+Gunicorn is probably the simplest way to run and manage Uvicorn in a production setting. Uvicorn includes a gunicorn worker class that means you can get set up with very little configuration.
+
+The following will start Gunicorn with four worker processes:
+
+```bash
+gunicorn -w 4 -k uvicorn.workers.UvicornWorker
+
+# check the running the processes
+ps -aef | grep gunicorn
+```
+
+The UvicornWorker implementation uses the uvloop and httptools implementations. To run under PyPy you'll want to use pure-python implementation instead. You can do this by using the UvicornH11Worker class.
+
+```bash
+gunicorn -w 4 -k uvicorn.workers.UvicornH11Worker
+```
+
+## Create a systemd service script for running Gunicorn to serve your application
+
+https://dev.to/tkirwa/create-a-systemd-service-script-for-running-gunicorn-to-serve-your-application-5aea
+
+To create or edit a gunicorn.service file in Linux for running a Flask application, you need to create a systemd service unit file. This service unit file will define how Gunicorn should run your Flask application as a service. Here's a step-by-step guide:
+
+
+1. Create or Edit the Gunicorn Service File:
+
+``` bash
+sudo vim /etc/systemd/system/gunicorn.service
+```
+
+To create a systemd service script for running Gunicorn to serve your application, you'll need to create a file named gunicorn.service with the following contents and place it in the appropriate directory on your server:
+
+``` ini
+[Unit]
+Description=Gunicorn instance to serve social-media-api fastapi application
+After=network.target
+
+[Service]
+User=your_username  # Replace with your username
+Group=your_groupname  # Replace with your groupname (usually same as username)
+WorkingDirectory=/path/to/your/app  # Replace with the path to your app directory
+ExecStart=/path/to/your/venv/bin/gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app
+Restart=always
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+
+```
+Replace the placeholders with your actual values:
+
+* your_username: Your username on the system.
+* your_groupname: Your primary group name on the system.
+* /path/to/your/app: The absolute path to your application's root directory.
+* /path/to/venv/bin: The absolute path to your virtual environment's bin directory.
+* app.main:app: The Python import path to your Gunicorn app object.
+
+To find your username and primary group name on a Unix-like system, you can use the id command. Open a terminal and type the following commands:
+``` bash
+# To get your username:
+   id -un
+# To get your primary group name:
+   id -gn 
+```
+
+### Reload the systemd manager configuration to make it aware of the new service file:
+
+``` bash
+   sudo systemctl daemon-reload
+```
+
+Enable the service to start on boot:
+
+``` bash
+   sudo systemctl enable gunicorn
+```
+
+Start the service:
+
+``` bash
+   sudo systemctl start gunicorn
+```
+
+Verify that the service is running without errors:
+
+``` bash
+   sudo systemctl status gunicorn
+```
+
+You can also restart, stop, or check the logs of the service using systemd commands:
+
+``` bash
+   sudo systemctl restart gunicorn
+   sudo systemctl stop gunicorn
+   journalctl -u gunicorn
+```
+
+---
+

@@ -5,9 +5,9 @@ from fastapi.middleware.cors import CORSMiddleware
 # from . import models
 # from .database import engine
 
-import logging
-logging.basicConfig()
-logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
+# import logging
+# logging.basicConfig()
+# logging.getLogger("sqlalchemy.engine").setLevel(logging.INFO)
 
 
 ## --> not needed if we use alembic database migration tool

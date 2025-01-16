@@ -300,3 +300,60 @@ You can also restart, stop, or check the logs of the service using systemd comma
 
 ---
 
+
+## Setup Nginx as a proxy to handle ssl termination and set up a domain name with SSL-Certificate
+
+### 1. Setup nginx 
+
+![alt text](pictures/nginx.PNG)
+
+- High performance webserver that can act as a proxy
+- Can handle SSL termination
+
+1. Configure Nginx as a proxy to fastapi application
+
+``` bash
+
+cd /etc/nginx/sites-available
+sudo vim ./default
+
+
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        server_name _; # replace with specific domain name like sanjeev.com
+        
+        location / {
+                proxy_pass http://localhost:8000;
+                proxy_http_version 1.1;
+                proxy_set_header X-Real-IP $remote_addr;
+                proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                proxy_set_header Upgrade $http_upgrade;
+                proxy_set_header Connection 'upgrade';
+                proxy_set_header Host $http_host;
+                proxy_set_header X-NginX-Proxy true;
+                proxy_redirect off;
+        }
+}
+
+```
+
+2. setup a domain name on namecheap or and domain provider
+
+3. set the A name and CNAME with you domain in you cloud provider dns
+
+4. Generate a new ssl certificate using certpot 
+   follow instructions in this guide [Certbot guide](https://certbot.eff.org/instructions?ws=nginx&os=snap&tab=standard)
+
+5. setup the server firewall to allow only http/https traffic 
+
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw allow ssh 
+sudo ufw enable
+sudo ufw status
+
+if you want to delete a rule in the firewall
+
+sudo ufw delete allow ssh

@@ -171,4 +171,5 @@ cython_debug/
 
 /Vagrant/.Vagrant
 
-./src/.venv
+/src/.venv
+/data/certbot/

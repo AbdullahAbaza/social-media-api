@@ -170,3 +170,5 @@ cython_debug/
 .env
 
 /Vagrant/.Vagrant
+
+./src/.venv

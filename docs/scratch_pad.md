@@ -357,3 +357,21 @@ sudo ufw status
 if you want to delete a rule in the firewall
 
 sudo ufw delete allow ssh
+
+
+--- 
+
+## Containerizing the Project
+
+### 1. Dev Environment
+   - Dockerfile-pip-dev
+   - Dockerfile-dev => uv
+      - docker-compose.dev.yml
+
+### 2. Prod
+   - Dockerfile-pip-dev
+   - Dockerfile => uv
+      - docker-compose.prod.yml
+
+
+

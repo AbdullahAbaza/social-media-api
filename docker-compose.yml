@@ -1,0 +1,64 @@
+services:
+  db:
+    image: postgres:alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - fastapi-network
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: social-media-db
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+
+  api:
+    build:
+      context: ./src
+      dockerfile: Dockerfile
+    command: >
+      sh -c "
+      ./prestart-old.sh &&
+      gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:8000
+      "
+    networks:
+      - fastapi-network
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/:/home/fastapi/src
+    env_file:
+      - .env
+    environment:
+      - DATABASE_HOSTNAME=db
+      - DATABASE_USER=postgres
+      - DATABASE_PASSWORD=postgres
+      - DATABASE_NAME=social-media-db
+      - DATABASE_PORT=5432
+
+    depends_on:
+      - db
+    # restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-file: "1"
+        max-size: "100k"
+    
+volumes:
+  postgres_data:
+networks:
+  fastapi-network:
+    driver: bridge
+
+
+
+
